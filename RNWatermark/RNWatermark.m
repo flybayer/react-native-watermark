@@ -41,14 +41,27 @@ RCT_EXPORT_METHOD(add:(NSString*)path :(RCTResponseSenderBlock)callback) {
     // 2 - Create AVMutableComposition object. This object will hold your AVMutableCompositionTrack instances.
     AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
 
-    // 3 - Video track
+    // 3 - Video & audio track
     AVMutableCompositionTrack *videoTrack = [mixComposition addMutableTrackWithMediaType:AVMediaTypeVideo
                                                                         preferredTrackID:kCMPersistentTrackID_Invalid];
+    AVMutableCompositionTrack *audioTrack = nil;
+
+
     NSLog(@"videoTrack => %@", videoTrack);
     [videoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.duration)
                         ofTrack:[[videoAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0]
                          atTime:kCMTimeZero error:nil];
+    [videoTrack setPreferredTransform:[[[videoAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0] preferredTransform]];
 
+    if ([[videoAsset tracksWithMediaType:AVMediaTypeAudio] count] > 0) {
+      audioTrack = [mixComposition addMutableTrackWithMediaType:AVMediaTypeAudio
+                                                                        preferredTrackID:kCMPersistentTrackID_Invalid];
+
+      [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.duration)
+                          ofTrack:[[videoAsset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0]
+                           atTime:kCMTimeZero error:nil];
+      [audioTrack setPreferredTransform:[[[videoAsset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0] preferredTransform]];
+    }
 
     // 3.1 - Create AVMutableVideoCompositionInstruction
     AVMutableVideoCompositionInstruction *mainInstruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
@@ -117,22 +130,48 @@ RCT_EXPORT_METHOD(add:(NSString*)path :(RCTResponseSenderBlock)callback) {
             [self exportDidFinish:exporter :callback];
         });
     }];
-
-
 }
 
 
 - (void)applyVideoEffectsToComposition:(AVMutableVideoComposition *)composition size:(CGSize)size
 {
     // 1 - set up the overlay
+
+    // >> TEXT
+    /* CATextLayer *textOfvideo=[[CATextLayer alloc] init]; */
+    /* textOfvideo.string= @"Storeo"; //[NSString stringWithFormat:@"%@",text];//text is shows the text that you want add in video. */
+    /*  [textOfvideo setFont:(__bridge CFTypeRef)([UIFont fontWithName:[NSString stringWithFormat:@"%@",fontUsed] size:13])];//fontUsed is the name of font */
+    /* [textOfvideo setFrame:CGRectMake(0, 0, size.width, size.height/6)]; */
+    /* [textOfvideo setAlignmentMode:kCAAlignmentCenter]; */
+    /* [textOfvideo setForegroundColor:[[UIColor blueColor] CGColor]]; */
+    /* CALayer *overlayLayer = [CALayer layer]; */
+    /* [overlayLayer addSublayer:textOfvideo]; */
+    /* overlayLayer.frame = CGRectMake(0, 0, size.width, size.height); */
+    /* [overlayLayer setMasksToBounds:YES]; */
+
     CALayer *overlayLayer = [CALayer layer];
     UIImage *overlayImage = nil;
-    overlayImage = [UIImage imageNamed:@"yolo-small"];
-
+    overlayImage = [UIImage imageNamed:@"watermark"];
 
     [overlayLayer setContents:(id)[overlayImage CGImage]];
-    overlayLayer.frame = CGRectMake(size.width - (152+20), 20, 152, 31);
+    float videoHeight = size.height;
+    float overlayWidth = 9.0 / 16.0 * videoHeight;
+    float overlayHeight = overlayWidth * overlayImage.size.height / overlayImage.size.width + 2;
+    float xOffset = (size.width/2) - (overlayWidth/2);
+    NSLog(@"WATERMARK video height => %f", size.height);
+    NSLog(@"WATERMARK video width => %f", size.width);
+    NSLog(@"WATERMARK overlayWidth => %f", overlayWidth);
+    NSLog(@"WATERMARK overlayHeight => %f", overlayHeight);
+    NSLog(@"WATERMARK xOffset => %f", xOffset);
+
+    float hMargin = 0;
+    float vMargin = 0;
+    overlayLayer.frame = CGRectMake(xOffset+hMargin, vMargin, overlayWidth-(hMargin*2), overlayHeight+vMargin);
+    overlayLayer.compositingFilter = @"overlayBlendMode";
+    overlayLayer.contentsGravity = kCAGravityResizeAspect;
+    [overlayLayer setOpacity:0.5];
     [overlayLayer setMasksToBounds:YES];
+
 
     // 2 - set up the parent layer
     CALayer *parentLayer = [CALayer layer];
@@ -145,9 +184,7 @@ RCT_EXPORT_METHOD(add:(NSString*)path :(RCTResponseSenderBlock)callback) {
     // 3 - apply magic
     composition.animationTool = [AVVideoCompositionCoreAnimationTool
                                  videoCompositionCoreAnimationToolWithPostProcessingAsVideoLayer:videoLayer inLayer:parentLayer];
-
 }
-
 
 
 @end
