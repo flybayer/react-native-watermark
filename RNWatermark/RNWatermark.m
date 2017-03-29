@@ -15,19 +15,21 @@ RCT_EXPORT_MODULE()
 
 - (void)exportDidFinish:(AVAssetExportSession*)session :(RCTResponseSenderBlock)callback {
     if (session.status == AVAssetExportSessionStatusCompleted) {
-        NSURL *outputURL = session.outputURL;
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-        if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputURL]) {
-            [library writeVideoAtPathToSavedPhotosAlbum:outputURL completionBlock:^(NSURL *assetURL, NSError *error){
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (error) {
-                        callback(@[error, [NSNull null]]);
-                    } else {
-                        callback(@[[NSNull null], [assetURL absoluteString]]);
-                    }
-                });
-            }];
-        }
+        callback(@[[NSNull null], [session.outputURL absoluteString]]);
+
+        /* NSURL *outputURL = session.outputURL; */
+        /* ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init]; */
+        /* if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputURL]) { */
+        /*     [library writeVideoAtPathToSavedPhotosAlbum:outputURL completionBlock:^(NSURL *assetURL, NSError *error){ */
+        /*         dispatch_async(dispatch_get_main_queue(), ^{ */
+        /*             if (error) { */
+        /*                 callback(@[error, [NSNull null]]); */
+        /*             } else { */
+        /*                 callback(@[[NSNull null], [assetURL absoluteString]]); */
+        /*             } */
+        /*         }); */
+        /*     }]; */
+        /* } */
     }
 }
 
