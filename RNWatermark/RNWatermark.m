@@ -14,6 +14,8 @@ RCT_EXPORT_MODULE()
 
 
 - (void)exportDidFinish:(AVAssetExportSession*)session :(RCTResponseSenderBlock)callback {
+    NSLog(@"WATERMARK finished => %tu", session.status);
+
     if (session.status == AVAssetExportSessionStatusCompleted) {
         callback(@[[NSNull null], [session.outputURL absoluteString]]);
 
@@ -30,6 +32,8 @@ RCT_EXPORT_MODULE()
         /*         }); */
         /*     }]; */
         /* } */
+    } else {
+        callback(@[session.error, [NSNull null]]);
     }
 }
 
